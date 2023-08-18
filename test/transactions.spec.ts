@@ -1,4 +1,5 @@
-import { expect, it, beforeAll, afterAll, describe } from 'vitest' 
+import { execSync } from 'node:child_process'
+import { expect, it, beforeAll, afterAll, describe, beforeEach } from 'vitest' 
 import request from 'supertest'
 import { app } from '../src/app'
 
@@ -14,9 +15,15 @@ describe('Transactions routes', async () => {
     await app.close()
   })
 
+  //excuta para remover e substituir os dados dos banco
+  beforeEach(() => {
+    execSync('npm run knex migrate:rollback --all')
+    execSync('npm run knex migrate:latest')
+  })
+
   it('should be able to create a new transaction'), async () => {
     await request(app.server)
-      .post('/transaction')
+      .post('/transactions')
       .send({
         title: 'New transaction',
         amount: 7000,
@@ -27,7 +34,7 @@ describe('Transactions routes', async () => {
 
   it('should be able to list all transaction'), async () => {
     const createTransactionResponse = await request(app.server)
-      .post('/transaction')
+      .post('/transactions')
       .send({
         title: 'New transaction',
         amount: 7000,
@@ -37,7 +44,7 @@ describe('Transactions routes', async () => {
       const cookies = createTransactionResponse.get('Set-Cookie')
 
       const listTransactionResponse = await request(app.server)
-        .get('/transaction')
+        .get('/transactions')
         .set('Cookie', cookies)
         .expect(200)
 
